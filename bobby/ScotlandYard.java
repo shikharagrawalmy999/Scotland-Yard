@@ -46,11 +46,13 @@ public class ScotlandYard implements Runnable{
 		public int port;
 		public int gamenumber;
 		private ExecutorService threadPool;
+		public int count_detectives;
 
 		public ScotlandYardGame(int port, int gamenumber){
 			this.port = port;
 			this.board = new Board();
 			this.gamenumber = gamenumber;
+			this.count_detectives=0;
 			try{
 				this.server = new ServerSocket(port);
 				System.out.println(String.format("Game %d:%d on", port, gamenumber));
@@ -69,8 +71,6 @@ public class ScotlandYard implements Runnable{
 			
 				//INITIALISATION: get the game going
 
-				
-
 				Socket socket = null;
 				boolean fugitiveIn;
 				
@@ -81,27 +81,35 @@ public class ScotlandYard implements Runnable{
 				*/
 				
 				do{
-			                    
-          
-                                    
-       
-                                       
-                         
-               
-      
+					try{
+						socket = server.accept();
+						fugitiveIn=true;
+					}
+					catch(SocketTimeoutException t){
+						fugitiveIn=false;
+					}
 				} while (!fugitiveIn);
-				
+
+				this.board.dead=false;
+
 				System.out.println(this.gamenumber);
 
 				// Spawn a thread to run the Fugitive
-                                             
-                                 
-                            
-                                                                                                  
-                                             
+                
+				Runnable fugitive_thread = new ServerThread(board, -1 , socket, port, gamenumber);
+				threadPool.execute(fugitive_thread);
+              
+				// Runnable moderator_thread = new Moderator(board);
+				// threadPool.execute(moderator_thread);
+
+				Moderator moderator=new Moderator(board);
+				Thread moderator_thread=new Thread(moderator);
+				moderator_thread.start();
 
 				// Spawn the moderator
-                                                  
+                // If code doesn't works check for the commented part of reentry permits
+				// in ServerThread.java 
+				// ~Hastyn 23/10/2021                              
                 
 				while (true){
 					/*
@@ -110,17 +118,21 @@ public class ScotlandYard implements Runnable{
 					*/
 
 					try {
-
+						// if(this.count_detectives==5){
+						// 	break;
+						// }
+						socket = server.accept();
 					} 
 					catch (SocketTimeoutException t){
-                                               
-                            
-                                                
-             
-       
-                                               
+						board.threadInfoProtector.acquire();
+						if(this.board.dead==true){
+							board.threadInfoProtector.release();
+							break;
+						}
+						board.threadInfoProtector.release();
 						continue;
 					}
+					// this.count_detectives++;
 					
 					
 					/*
@@ -131,25 +143,27 @@ public class ScotlandYard implements Runnable{
 					if you can, spawn a thread, assign an ID, increment the totalThreads
 
 					don't forget to release lock when done!
-					*/
-					                                         
-                          
-                     
-                                               
-            
-      
-                                                 
-                          
-                     
-                                               
-               
-      
-     
-                                                                                                          
-                                  
+					*/ 
+					board.threadInfoProtector.acquire();
+					if(board.playingThreads>=6){
+						socket.close();
+						board.threadInfoProtector.release();
 
-                                              
+						// If the server/socket gives error consider debugging this line :(
+						// ~Shikhar 23/10/2021
 
+						continue;
+					}
+					if(board.dead==true){
+						socket.close();
+						board.threadInfoProtector.release();
+						break;
+					}
+					
+					Runnable detective_thread = new ServerThread(board, board.getAvailableID() , socket, port, gamenumber);
+					threadPool.execute(detective_thread);
+					board.totalThreads++;
+					board.threadInfoProtector.release();
 				}
 
 				/*
@@ -157,10 +171,11 @@ public class ScotlandYard implements Runnable{
 				
 				kill threadPool (Careless Whispers BGM stops)
 				*/
-			            
-                        
-                               
-    
+
+				moderator_thread.interrupt();
+				socket.close();
+				threadPool.shutdown();
+
 				System.out.println(String.format("Game %d:%d Over", this.port, this.gamenumber));
 				return;
 			}

@@ -48,8 +48,10 @@ public class Moderator implements Runnable{
 				if (this.board.embryo){
 					if(this.board.totalThreads>0) this.board.embryo=false;                    
 					else{
-						board.moderatorEnabler.release();
+						// board.moderatorEnabler.release();
 						board.threadInfoProtector.release();
+						board.reentry.release();
+						board.registration.release();
 						continue;
 					}
 				} //There was just a continue statement, we have added rest everything!
@@ -71,9 +73,12 @@ public class Moderator implements Runnable{
 					board.moderatorEnabler.release();
 					board.threadInfoProtector.release();
 				}
+				
 
-				this.board.registration = new Semaphore(newbies);
-				this.board.reentry = new Semaphore(this.board.playingThreads - this.board.quitThreads);
+				// this.board.registration = new Semaphore(newbies);
+				// this.board.reentry = new Semaphore(this.board.totalThreads);
+				this.board.reentry.release(this.board.totalThreads);
+				this.board.registration.release(newbies);
 
                                               
             

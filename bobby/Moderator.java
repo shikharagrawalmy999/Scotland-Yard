@@ -16,6 +16,7 @@ public class Moderator implements Runnable{
 	public void run(){
 		while (true){
 			try{
+				System.out.println("Entering moderator with permits: "+board.moderatorEnabler.availablePermits());
 				board.moderatorEnabler.acquire();
 				board.threadInfoProtector.acquire();
 				/*acquire permits: 
@@ -46,14 +47,18 @@ public class Moderator implements Runnable{
 				//base case
 				
 				if (this.board.embryo){
-					if(this.board.totalThreads>0) this.board.embryo=false;                    
-					else{
-						// board.moderatorEnabler.release();
-						board.threadInfoProtector.release();
-						board.reentry.release();
-						board.registration.release();
-						continue;
-					}
+					System.out.println("Entered the moderator at line 49");
+
+					// if(this.board.totalThreads>0) this.board.embryo=false;                    
+					
+					board.playingThreads=board.totalThreads;
+					// board.moderatorEnabler.release();
+					board.threadInfoProtector.release();
+					board.reentry.release();
+					board.registration.release();
+
+					continue;
+					
 				} //There was just a continue statement, we have added rest everything!
 				
 				
@@ -70,8 +75,9 @@ public class Moderator implements Runnable{
 				*/
 				if(board.totalThreads==0){
 					board.dead=true;
-					board.moderatorEnabler.release();
+					// board.moderatorEnabler.release(); 
 					board.threadInfoProtector.release();
+					return;
 				}
 				
 
@@ -79,7 +85,9 @@ public class Moderator implements Runnable{
 				// this.board.reentry = new Semaphore(this.board.totalThreads);
 				this.board.reentry.release(this.board.totalThreads);
 				this.board.registration.release(newbies);
-
+				System.out.println("Totalthreads "+this.board.totalThreads);
+				System.out.println("Newbies "+newbies);
+				System.out.println("Reentry and Registration permits released");
                                               
             
      
@@ -107,6 +115,7 @@ public class Moderator implements Runnable{
                                              
 			}
 			catch (InterruptedException ex){
+				System.out.println("Nice moderator was caught");
 				System.err.println("An InterruptedException was caught: " + ex.getMessage());
 				ex.printStackTrace();
 				return;

@@ -55,10 +55,12 @@ public class ScotlandYard implements Runnable{
 			this.count_detectives=0;
 			try{
 				this.server = new ServerSocket(port);
+				System.out.println("New ServerSocket was formed correctly");
 				System.out.println(String.format("Game %d:%d on", port, gamenumber));
 				server.setSoTimeout(5000);
 			}
 			catch (IOException i) {
+				System.out.println("New ServerSocket was not formed");
 				return;
 			}
 			this.threadPool = Executors.newFixedThreadPool(10);
@@ -88,6 +90,10 @@ public class ScotlandYard implements Runnable{
 					catch(SocketTimeoutException t){
 						fugitiveIn=false;
 					}
+					catch(Exception e){
+						// System.out.println("Nice");
+						fugitiveIn=false;
+					}
 				} while (!fugitiveIn);
 
 				this.board.dead=false;
@@ -95,16 +101,20 @@ public class ScotlandYard implements Runnable{
 				System.out.println(this.gamenumber);
 
 				// Spawn a thread to run the Fugitive
-                
+                board.totalThreads++;
 				Runnable fugitive_thread = new ServerThread(board, -1 , socket, port, gamenumber);
 				threadPool.execute(fugitive_thread);
-              
+
+				
+
 				// Runnable moderator_thread = new Moderator(board);
 				// threadPool.execute(moderator_thread);
 
 				Moderator moderator=new Moderator(board);
 				Thread moderator_thread=new Thread(moderator);
 				moderator_thread.start();
+
+				System.out.println("Moderator must start here");
 
 				// Spawn the moderator
                 // If code doesn't works check for the commented part of reentry permits
@@ -126,6 +136,7 @@ public class ScotlandYard implements Runnable{
 					catch (SocketTimeoutException t){
 						board.threadInfoProtector.acquire();
 						if(this.board.dead==true){
+							System.out.println("Line 139 ScotlandYard.java, threadinfo released");
 							board.threadInfoProtector.release();
 							break;
 						}
@@ -155,7 +166,7 @@ public class ScotlandYard implements Runnable{
 						continue;
 					}
 					if(board.dead==true){
-						socket.close();
+						socket.close(); //Needs to be looked
 						board.threadInfoProtector.release();
 						break;
 					}
@@ -163,6 +174,7 @@ public class ScotlandYard implements Runnable{
 					Runnable detective_thread = new ServerThread(board, board.getAvailableID() , socket, port, gamenumber);
 					threadPool.execute(detective_thread);
 					board.totalThreads++;
+					System.out.println("Detective serverthread spawned");
 					board.threadInfoProtector.release();
 				}
 
@@ -172,14 +184,22 @@ public class ScotlandYard implements Runnable{
 				kill threadPool (Careless Whispers BGM stops)
 				*/
 
-				moderator_thread.interrupt();
+				try{
+					moderator_thread.interrupt();
+				}
+				catch(Exception e){
+					System.out.println("Nice was caught");
+				}
 				socket.close();
+				System.out.println("The socket was closed successfully");
 				threadPool.shutdown();
-
+				System.out.println("Threadpool was shutdown successfully");
 				System.out.println(String.format("Game %d:%d Over", this.port, this.gamenumber));
+				server.close();
 				return;
 			}
 			catch (InterruptedException ex){
+				System.out.println("Line 194 of ScotlandYard.java");
 				System.err.println("An InterruptedException was caught: " + ex.getMessage());
 				ex.printStackTrace();
 				return;

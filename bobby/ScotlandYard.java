@@ -50,6 +50,15 @@ public class ScotlandYard implements Runnable{
 		public ScotlandYardGame(int port, int gamenumber){
 			this.port = port;
 			this.board = new Board();
+			while(true){
+				try{
+					this.board.moderatorEnabler.acquire();
+					break;
+				}
+				catch(Exception e){
+					continue;
+				}
+			}
 			this.gamenumber = gamenumber;
 			this.count_detectives=0;
 			try{

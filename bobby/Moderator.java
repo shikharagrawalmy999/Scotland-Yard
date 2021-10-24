@@ -71,6 +71,9 @@ public class Moderator implements Runnable{
 					return;
 				}
 				
+				this.board.playingThreads=this.board.totalThreads;
+				this.board.quitThreads=0;
+
 				this.board.reentry.release(this.board.totalThreads);
 				this.board.registration.release(newbies);
 				
@@ -84,8 +87,7 @@ public class Moderator implements Runnable{
 
 				Release permits for threads to play, and the permit to modify thread info
 				*/
-				this.board.playingThreads=this.board.totalThreads;
-				this.board.quitThreads=0;
+
 				
 				board.threadInfoProtector.release();
 				

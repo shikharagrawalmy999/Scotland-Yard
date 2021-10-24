@@ -362,7 +362,6 @@ public class ServerThread implements Runnable{
 						output.close();
 						socket.close();
 					}
-					
 				}
 				if(board.count==temp_playing_threads){
 					board.count=0;

@@ -51,7 +51,8 @@ public class Moderator implements Runnable{
 
 					// if(this.board.totalThreads>0) this.board.embryo=false;                    
 					
-					board.playingThreads=board.totalThreads;
+					// board.playingThreads=board.totalThreads;
+					board.playingThreads=1;
 					// board.moderatorEnabler.release();
 					board.threadInfoProtector.release();
 					board.reentry.release();
@@ -85,6 +86,7 @@ public class Moderator implements Runnable{
 				// this.board.reentry = new Semaphore(this.board.totalThreads);
 				this.board.reentry.release(this.board.totalThreads);
 				this.board.registration.release(newbies);
+				
 				System.out.println("Totalthreads "+this.board.totalThreads);
 				System.out.println("Newbies "+newbies);
 				System.out.println("Reentry and Registration permits released");

@@ -5,8 +5,7 @@ import java.io.*;
 import java.util.*;
 
 import java.util.concurrent.Semaphore;
-
-
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -183,19 +182,22 @@ public class ScotlandYard implements Runnable{
 				
 				kill threadPool (Careless Whispers BGM stops)
 				*/
-
+				threadPool.awaitTermination(10, TimeUnit.SECONDS);
 				try{
 					moderator_thread.interrupt();
 				}
 				catch(Exception e){
 					System.out.println("Nice was caught");
 				}
-				socket.close();
-				System.out.println("The socket was closed successfully");
-				threadPool.shutdown();
+				
+				// socket.close();
+				
+				// threadPool.shutdown();
+				
 				System.out.println("Threadpool was shutdown successfully");
 				System.out.println(String.format("Game %d:%d Over", this.port, this.gamenumber));
 				server.close();
+				System.out.println("The server was closed successfully");
 				return;
 			}
 			catch (InterruptedException ex){
